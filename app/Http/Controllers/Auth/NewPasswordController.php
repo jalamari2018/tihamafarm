@@ -38,6 +38,12 @@ class NewPasswordController extends Controller
             'token' => 'required',
             'email' => 'required|email',
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ], [
+            'token.required' => 'رمز إعادة التعيين مطلوب.',
+            'email.required' => 'البريد الإلكتروني مطلوب.',
+            'email.email' => 'أدخل بريدًا إلكترونيًا صحيحًا.',
+            'password.required' => 'كلمة المرور الجديدة مطلوبة.',
+            'password.confirmed' => 'تأكيد كلمة المرور غير مطابق.',
         ]);
 
         // Here we will attempt to reset the user's password. If it is successful we

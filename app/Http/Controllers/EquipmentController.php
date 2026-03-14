@@ -16,6 +16,7 @@ class EquipmentController extends Controller
     public function store(StoreEquipmentRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $validated['seller_name'] = DigitNormalizer::toArabicIndicDigits((string) $request->user()->name);
         $validated = $this->normalizeTextDigitsToArabicIndic($validated);
         $validated['image_path'] = $request->file('image')->store('equipment', 'public');
 
@@ -51,13 +52,19 @@ class EquipmentController extends Controller
         $validated = $this->normalizeTextDigitsToArabicIndic($validated);
 
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($equipment->image_path);
+            if (Equipment::where('image_path', $equipment->image_path)->count() <= 1) {
+                Storage::disk('public')->delete($equipment->image_path);
+            }
             $validated['image_path'] = $request->file('image')->store('equipment', 'public');
         }
 
         $equipment->update($validated);
 
-        return redirect()->route('dashboard')->with('success', 'تم تحديث إعلان المعدات.');
+        if ($request->user()->isAdmin()) {
+            return redirect()->route('dashboard', ['panel' => 'equipment'])->with('success', 'تم تحديث إعلان المعدات.');
+        }
+
+        return redirect()->route('dashboard', ['panel' => 'myads'])->with('success', 'تم تحديث إعلان المعدات.');
     }
 
     public function destroy(Equipment $equipment): RedirectResponse
@@ -65,7 +72,9 @@ class EquipmentController extends Controller
         $user = request()->user();
         $this->authorizeAction($equipment->user_id, (int) $user->id, $user->isAdmin());
 
-        Storage::disk('public')->delete($equipment->image_path);
+        if (Equipment::where('image_path', $equipment->image_path)->count() <= 1) {
+            Storage::disk('public')->delete($equipment->image_path);
+        }
         $equipment->delete();
 
         return back()->with('success', 'تم حذف إعلان المعدات.');

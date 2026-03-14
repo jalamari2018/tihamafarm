@@ -20,7 +20,25 @@ class DashboardController extends Controller
             return $this->adminDashboard();
         }
 
+        $requestedPanel = (string) $request->query('panel', 'myads');
+        $legacyToCurrent = [
+            'overview' => 'myads',
+            'create' => 'myads',
+            'farms' => 'myads',
+            'harvests' => 'myads',
+            'equipment' => 'myads',
+        ];
+        $normalizedPanel = $legacyToCurrent[$requestedPanel] ?? $requestedPanel;
+        $allowedPanels = ['myads', 'profile'];
+        $initialPanel = in_array($normalizedPanel, $allowedPanels, true) ? $normalizedPanel : 'myads';
+
         return Inertia::render('Dashboard', [
+            'initialPanel' => $initialPanel,
+            'stats' => [
+                'farms_count' => Farm::where('user_id', $user->id)->count(),
+                'harvests_count' => Harvest::where('user_id', $user->id)->count(),
+                'equipment_count' => Equipment::where('user_id', $user->id)->count(),
+            ],
             'myFarms' => Farm::query()
                 ->where('user_id', $user->id)
                 ->latest()
@@ -28,9 +46,15 @@ class DashboardController extends Controller
                 ->map(fn (Farm $farm) => [
                     'id' => $farm->id,
                     'farm_name' => $farm->farm_name,
+                    'farmer_name' => $farm->farmer_name,
                     'location_text' => $farm->location_text,
                     'phone' => $farm->phone,
+                    'length' => $farm->length,
+                    'width' => $farm->width,
                     'area' => $farm->area,
+                    'has_well' => $farm->has_well,
+                    'has_electricity' => $farm->has_electricity,
+                    'description' => $farm->description,
                     'image_url' => '/storage/' . ltrim($farm->image_path, '/'),
                 ]),
             'myHarvests' => Harvest::query()
@@ -40,10 +64,13 @@ class DashboardController extends Controller
                 ->map(fn (Harvest $harvest) => [
                     'id' => $harvest->id,
                     'harvest_name' => $harvest->harvest_name,
+                    'farmer_name' => $harvest->farmer_name,
                     'location_text' => $harvest->location_text,
                     'phone' => $harvest->phone,
                     'ready_status' => $harvest->ready_status,
+                    'ready_date' => $harvest->ready_date?->toDateString(),
                     'ready_in_days' => $harvest->ready_in_days,
+                    'description' => $harvest->description,
                     'image_url' => '/storage/' . ltrim($harvest->image_path, '/'),
                 ]),
             'myEquipment' => Equipment::query()
@@ -53,9 +80,11 @@ class DashboardController extends Controller
                 ->map(fn (Equipment $equipment) => [
                     'id' => $equipment->id,
                     'product_name' => $equipment->product_name,
+                    'seller_name' => $equipment->seller_name,
                     'location_text' => $equipment->location_text,
                     'phone' => $equipment->phone,
                     'price' => $equipment->price,
+                    'description' => $equipment->description,
                     'image_url' => '/storage/' . ltrim($equipment->image_path, '/'),
                 ]),
         ]);
@@ -63,7 +92,12 @@ class DashboardController extends Controller
 
     private function adminDashboard(): Response
     {
+        $requestedPanel = (string) request()->query('panel', 'stats');
+        $allowedPanels = ['stats', 'farms', 'harvests', 'equipment', 'users', 'profile'];
+        $initialPanel = in_array($requestedPanel, $allowedPanels, true) ? $requestedPanel : 'stats';
+
         return Inertia::render('Admin/Dashboard', [
+            'initialPanel' => $initialPanel,
             'stats' => [
                 'users_count' => User::count(),
                 'farms_count' => Farm::count(),
@@ -120,6 +154,7 @@ class DashboardController extends Controller
                     'phone' => $harvest->phone,
                     'location_text' => $harvest->location_text,
                     'ready_status' => $harvest->ready_status,
+                    'ready_date' => $harvest->ready_date?->toDateString(),
                     'ready_in_days' => $harvest->ready_in_days,
                     'description' => $harvest->description,
                     'image_url' => '/storage/' . ltrim($harvest->image_path, '/'),

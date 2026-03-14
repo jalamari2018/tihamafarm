@@ -3,7 +3,8 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import DeleteUserForm from './Partials/DeleteUserForm.vue';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm.vue';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm.vue';
-import { Head } from '@inertiajs/vue3';
+import { Head, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
 
 defineProps({
     mustVerifyEmail: {
@@ -13,17 +14,20 @@ defineProps({
         type: String,
     },
 });
+
+const page = usePage();
+const isAdmin = computed(() => page.props.auth?.user?.role === 'admin');
 </script>
 
 <template>
-    <Head title="Profile" />
+    <Head title="الملف الشخصي" />
 
     <AuthenticatedLayout>
         <template #header>
             <h2
                 class="text-xl font-semibold leading-tight text-gray-800"
             >
-                Profile
+                الملف الشخصي
             </h2>
         </template>
 
@@ -46,6 +50,7 @@ defineProps({
                 </div>
 
                 <div
+                    v-if="!isAdmin"
                     class="bg-white p-4 shadow sm:rounded-lg sm:p-8"
                 >
                     <DeleteUserForm class="max-w-xl" />

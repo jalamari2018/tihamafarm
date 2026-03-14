@@ -2,26 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Equipment;
+use App\Models\Farm;
+use App\Models\Harvest;
 use App\Http\Requests\ProfileUpdateRequest;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Redirect;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Support\Facades\Storage;
 
 class ProfileController extends Controller
 {
     /**
      * Display the user's profile form.
      */
-    public function edit(Request $request): Response
+    public function edit(Request $request): RedirectResponse
     {
-        return Inertia::render('Profile/Edit', [
-            'mustVerifyEmail' => $request->user() instanceof MustVerifyEmail,
-            'status' => session('status'),
-        ]);
+        return Redirect::route('dashboard', ['panel' => 'profile']);
     }
 
     /**
@@ -29,15 +27,39 @@ class ProfileController extends Controller
      */
     public function update(ProfileUpdateRequest $request): RedirectResponse
     {
-        $request->user()->fill($request->validated());
+        $user = $request->user();
+        $validated = $request->validated();
 
-        if ($request->user()->isDirty('email')) {
-            $request->user()->email_verified_at = null;
+        $removeAvatar = (bool) ($validated['remove_avatar'] ?? false);
+
+        if ($removeAvatar && $user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+            $validated['avatar_path'] = null;
         }
 
-        $request->user()->save();
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar_path) {
+                Storage::disk('public')->delete($user->avatar_path);
+            }
 
-        return Redirect::route('profile.edit');
+            $validated['avatar_path'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        unset($validated['avatar'], $validated['remove_avatar']);
+
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        if ($user->isAdmin()) {
+            return Redirect::route('dashboard', ['panel' => 'profile'])->with('success', 'تم تحديث معلومات الملف الشخصي.');
+        }
+
+        return Redirect::route('dashboard', ['panel' => 'profile'])->with('success', 'تم تحديث معلومات الملف الشخصي.');
     }
 
     /**
@@ -50,6 +72,33 @@ class ProfileController extends Controller
         ]);
 
         $user = $request->user();
+        $userId = (int) $user->id;
+
+        $farmImagePaths = Farm::where('user_id', $userId)->pluck('image_path')->unique()->values();
+        $harvestImagePaths = Harvest::where('user_id', $userId)->pluck('image_path')->unique()->values();
+        $equipmentImagePaths = Equipment::where('user_id', $userId)->pluck('image_path')->unique()->values();
+
+        foreach ($farmImagePaths as $imagePath) {
+            if (Farm::where('image_path', $imagePath)->where('user_id', '!=', $userId)->doesntExist()) {
+                Storage::disk('public')->delete($imagePath);
+            }
+        }
+
+        foreach ($harvestImagePaths as $imagePath) {
+            if (Harvest::where('image_path', $imagePath)->where('user_id', '!=', $userId)->doesntExist()) {
+                Storage::disk('public')->delete($imagePath);
+            }
+        }
+
+        foreach ($equipmentImagePaths as $imagePath) {
+            if (Equipment::where('image_path', $imagePath)->where('user_id', '!=', $userId)->doesntExist()) {
+                Storage::disk('public')->delete($imagePath);
+            }
+        }
+
+        if ($user->avatar_path) {
+            Storage::disk('public')->delete($user->avatar_path);
+        }
 
         Auth::logout();
 

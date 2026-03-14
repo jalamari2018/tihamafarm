@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Support\DigitNormalizer;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateEquipmentRequest extends FormRequest
@@ -16,11 +17,26 @@ class UpdateEquipmentRequest extends FormRequest
         return [
             'product_name' => ['required', 'string', 'max:255'],
             'seller_name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:30'],
+            'phone' => ['required', 'regex:/^05\d{8}$/'],
             'location_text' => ['required', 'string', 'max:255'],
             'price' => ['required', 'numeric', 'min:0'],
             'description' => ['nullable', 'string', 'max:2000'],
             'image' => ['nullable', 'image', 'max:4096'],
         ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'phone.regex' => 'رقم الهاتف يجب أن يكون بصيغة سعودية صحيحة مثل 05XXXXXXXX.',
+        ];
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'phone' => DigitNormalizer::normalizeSaudiPhone($this->input('phone')),
+            'price' => DigitNormalizer::toEnglishDigits($this->input('price')),
+        ]);
     }
 }

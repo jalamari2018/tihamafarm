@@ -16,6 +16,7 @@ class FarmController extends Controller
     public function store(StoreFarmRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $validated['farmer_name'] = DigitNormalizer::toArabicIndicDigits((string) $request->user()->name);
         $validated = $this->normalizeTextDigitsToArabicIndic($validated);
         $validated['has_well'] = $request->boolean('has_well');
         $validated['has_electricity'] = $request->boolean('has_electricity');
@@ -60,13 +61,19 @@ class FarmController extends Controller
         $validated['area'] = (float) $validated['length'] * (float) $validated['width'];
 
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($farm->image_path);
+            if (Farm::where('image_path', $farm->image_path)->count() <= 1) {
+                Storage::disk('public')->delete($farm->image_path);
+            }
             $validated['image_path'] = $request->file('image')->store('farms', 'public');
         }
 
         $farm->update($validated);
 
-        return redirect()->route('dashboard')->with('success', 'تم تحديث بيانات المزرعة.');
+        if ($request->user()->isAdmin()) {
+            return redirect()->route('dashboard', ['panel' => 'farms'])->with('success', 'تم تحديث بيانات المزرعة.');
+        }
+
+        return redirect()->route('dashboard', ['panel' => 'myads'])->with('success', 'تم تحديث بيانات المزرعة.');
     }
 
     public function destroy(Farm $farm): RedirectResponse
@@ -74,7 +81,9 @@ class FarmController extends Controller
         $user = request()->user();
         $this->authorizeAction($farm->user_id, (int) $user->id, $user->isAdmin());
 
-        Storage::disk('public')->delete($farm->image_path);
+        if (Farm::where('image_path', $farm->image_path)->count() <= 1) {
+            Storage::disk('public')->delete($farm->image_path);
+        }
         $farm->delete();
 
         return back()->with('success', 'تم حذف إعلان المزرعة.');

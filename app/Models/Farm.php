@@ -19,6 +19,8 @@ class Farm extends Model
         'length',
         'width',
         'area',
+        'has_well',
+        'has_electricity',
         'description',
         'image_path',
     ];
@@ -27,6 +29,8 @@ class Farm extends Model
         'length' => 'decimal:2',
         'width' => 'decimal:2',
         'area' => 'decimal:2',
+        'has_well' => 'boolean',
+        'has_electricity' => 'boolean',
     ];
 
     public function user(): BelongsTo

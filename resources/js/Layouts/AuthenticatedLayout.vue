@@ -6,9 +6,27 @@ import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink.vue';
 import FlashToast from '@/Components/FlashToast.vue';
-import { Link } from '@inertiajs/vue3';
+import Modal from '@/Components/Modal.vue';
+import { Link, router } from '@inertiajs/vue3';
 
 const showingNavigationDropdown = ref(false);
+const showLogoutModal = ref(false);
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+const submitLogout = async () => {
+    showLogoutModal.value = true;
+    await sleep(1200);
+
+    router.post(route('logout'), {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            window.location.href = route('home');
+        },
+        onFinish: () => {
+            showLogoutModal.value = false;
+        },
+    });
+};
 </script>
 
 <template>
@@ -55,9 +73,9 @@ const showingNavigationDropdown = ref(false);
 
                             <template #content>
                                 <DropdownLink :href="route('profile.edit')">الملف الشخصي</DropdownLink>
-                                <DropdownLink :href="route('logout')" method="post" as="button">
+                                <button type="button" class="block w-full px-4 py-2 text-right text-sm leading-5 text-gray-700 transition duration-150 ease-in-out hover:bg-gray-100 focus:bg-gray-100 focus:outline-none" @click="submitLogout">
                                     تسجيل الخروج
-                                </DropdownLink>
+                                </button>
                             </template>
                         </Dropdown>
                     </div>
@@ -90,16 +108,35 @@ const showingNavigationDropdown = ref(false);
 
             <div v-show="showingNavigationDropdown" class="border-t border-brand-100 sm:hidden">
                 <div class="space-y-1 pb-3 pt-2">
-                    <ResponsiveNavLink :href="route('home')" :active="route().current('home')">
-                        الرئيسية
-                    </ResponsiveNavLink>
-                    <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
-                        لوحة التحكم
-                    </ResponsiveNavLink>
+                    <template v-if="$page.props.auth.user.role === 'admin'">
+                        <ResponsiveNavLink :href="route('dashboard', { panel: 'stats' })" :active="$page.url.includes('panel=stats') || (route().current('dashboard') && !$page.url.includes('panel='))">
+                            الإحصائيات
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('dashboard', { panel: 'farms' })" :active="$page.url.includes('panel=farms')">
+                            المزارع
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('dashboard', { panel: 'harvests' })" :active="$page.url.includes('panel=harvests')">
+                            المحاصيل
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('dashboard', { panel: 'equipment' })" :active="$page.url.includes('panel=equipment')">
+                            المعدات
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('dashboard', { panel: 'users' })" :active="$page.url.includes('panel=users')">
+                            المستخدمون
+                        </ResponsiveNavLink>
+                    </template>
+                    <template v-else>
+                        <ResponsiveNavLink :href="route('home')" :active="route().current('home')">
+                            الرئيسية
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink :href="route('dashboard')" :active="route().current('dashboard')">
+                            لوحة التحكم
+                        </ResponsiveNavLink>
+                    </template>
                     <ResponsiveNavLink :href="route('profile.edit')">الملف الشخصي</ResponsiveNavLink>
-                    <ResponsiveNavLink :href="route('logout')" method="post" as="button">
+                    <button type="button" class="block w-full border-r-4 border-transparent px-4 py-2 text-right text-base font-semibold text-brand-700 hover:bg-brand-bg" @click="submitLogout">
                         تسجيل الخروج
-                    </ResponsiveNavLink>
+                    </button>
                 </div>
             </div>
         </nav>
@@ -111,5 +148,15 @@ const showingNavigationDropdown = ref(false);
         <main class="pb-10">
             <slot />
         </main>
+
+        <Modal :show="showLogoutModal" max-width="md" :closeable="false">
+            <div class="p-6" dir="rtl">
+                <h3 class="text-lg font-bold text-brand-900">جاري تسجيل الخروج</h3>
+                <p class="mt-2 text-sm text-brand-700">يرجى الانتظار...</p>
+                <div class="mt-5 flex justify-center">
+                    <span class="inline-block h-8 w-8 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"></span>
+                </div>
+            </div>
+        </Modal>
     </div>
 </template>

@@ -16,6 +16,7 @@ class HarvestController extends Controller
     public function store(StoreHarvestRequest $request): RedirectResponse
     {
         $validated = $request->validated();
+        $validated['farmer_name'] = DigitNormalizer::toArabicIndicDigits((string) $request->user()->name);
         $validated = $this->normalizeTextDigitsToArabicIndic($validated);
         $validated['image_path'] = $request->file('image')->store('harvests', 'public');
 
@@ -52,13 +53,19 @@ class HarvestController extends Controller
         $validated = $this->normalizeTextDigitsToArabicIndic($validated);
 
         if ($request->hasFile('image')) {
-            Storage::disk('public')->delete($harvest->image_path);
+            if (Harvest::where('image_path', $harvest->image_path)->count() <= 1) {
+                Storage::disk('public')->delete($harvest->image_path);
+            }
             $validated['image_path'] = $request->file('image')->store('harvests', 'public');
         }
 
         $harvest->update($validated);
 
-        return redirect()->route('dashboard')->with('success', 'تم تحديث إعلان المحصول.');
+        if ($request->user()->isAdmin()) {
+            return redirect()->route('dashboard', ['panel' => 'harvests'])->with('success', 'تم تحديث إعلان المحصول.');
+        }
+
+        return redirect()->route('dashboard', ['panel' => 'myads'])->with('success', 'تم تحديث إعلان المحصول.');
     }
 
     public function destroy(Harvest $harvest): RedirectResponse
@@ -66,7 +73,9 @@ class HarvestController extends Controller
         $user = request()->user();
         $this->authorizeAction($harvest->user_id, (int) $user->id, $user->isAdmin());
 
-        Storage::disk('public')->delete($harvest->image_path);
+        if (Harvest::where('image_path', $harvest->image_path)->count() <= 1) {
+            Storage::disk('public')->delete($harvest->image_path);
+        }
         $harvest->delete();
 
         return back()->with('success', 'تم حذف إعلان المحصول.');
