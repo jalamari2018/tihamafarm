@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Equipment;
 use App\Models\Farm;
 use App\Models\Harvest;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -23,8 +22,10 @@ class MarketplaceController extends Controller
                 'length' => $farm->length,
                 'width' => $farm->width,
                 'area' => $farm->area,
+                'has_well' => $farm->has_well,
+                'has_electricity' => $farm->has_electricity,
                 'description' => $farm->description,
-                'image_url' => Storage::url($farm->image_path),
+                'image_url' => '/storage/' . ltrim($farm->image_path, '/'),
                 'created_at' => $farm->created_at?->toDateString(),
             ]),
             'harvests' => Harvest::query()->latest()->get()->map(fn (Harvest $harvest) => [
@@ -37,7 +38,7 @@ class MarketplaceController extends Controller
                 'ready_date' => $harvest->ready_date?->toDateString(),
                 'ready_in_days' => $harvest->ready_in_days,
                 'description' => $harvest->description,
-                'image_url' => Storage::url($harvest->image_path),
+                'image_url' => '/storage/' . ltrim($harvest->image_path, '/'),
                 'created_at' => $harvest->created_at?->toDateString(),
             ]),
             'equipment' => Equipment::query()->latest()->get()->map(fn (Equipment $equipment) => [
@@ -48,7 +49,7 @@ class MarketplaceController extends Controller
                 'location_text' => $equipment->location_text,
                 'price' => $equipment->price,
                 'description' => $equipment->description,
-                'image_url' => Storage::url($equipment->image_path),
+                'image_url' => '/storage/' . ltrim($equipment->image_path, '/'),
                 'created_at' => $equipment->created_at?->toDateString(),
             ]),
         ]);

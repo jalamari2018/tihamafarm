@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Equipment;
 use App\Models\Farm;
 use App\Models\Harvest;
+use App\Models\User;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -15,6 +15,10 @@ class DashboardController extends Controller
     public function __invoke(Request $request): Response
     {
         $user = $request->user();
+
+        if ($user->isAdmin()) {
+            return $this->adminDashboard();
+        }
 
         return Inertia::render('Dashboard', [
             'myFarms' => Farm::query()
@@ -27,7 +31,7 @@ class DashboardController extends Controller
                     'location_text' => $farm->location_text,
                     'phone' => $farm->phone,
                     'area' => $farm->area,
-                    'image_url' => Storage::url($farm->image_path),
+                    'image_url' => '/storage/' . ltrim($farm->image_path, '/'),
                 ]),
             'myHarvests' => Harvest::query()
                 ->where('user_id', $user->id)
@@ -40,7 +44,7 @@ class DashboardController extends Controller
                     'phone' => $harvest->phone,
                     'ready_status' => $harvest->ready_status,
                     'ready_in_days' => $harvest->ready_in_days,
-                    'image_url' => Storage::url($harvest->image_path),
+                    'image_url' => '/storage/' . ltrim($harvest->image_path, '/'),
                 ]),
             'myEquipment' => Equipment::query()
                 ->where('user_id', $user->id)
@@ -52,7 +56,91 @@ class DashboardController extends Controller
                     'location_text' => $equipment->location_text,
                     'phone' => $equipment->phone,
                     'price' => $equipment->price,
-                    'image_url' => Storage::url($equipment->image_path),
+                    'image_url' => '/storage/' . ltrim($equipment->image_path, '/'),
+                ]),
+        ]);
+    }
+
+    private function adminDashboard(): Response
+    {
+        return Inertia::render('Admin/Dashboard', [
+            'stats' => [
+                'users_count' => User::count(),
+                'farms_count' => Farm::count(),
+                'harvests_count' => Harvest::count(),
+                'equipment_count' => Equipment::count(),
+                'harvest_ready_now' => Harvest::where('ready_status', 'now')->count(),
+                'harvest_ready_future' => Harvest::where('ready_status', 'future')->count(),
+            ],
+            'users' => User::query()
+                ->withCount(['farms', 'harvests', 'equipment'])
+                ->latest()
+                ->get()
+                ->map(fn (User $user) => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role,
+                    'farms_count' => $user->farms_count,
+                    'harvests_count' => $user->harvests_count,
+                    'equipment_count' => $user->equipment_count,
+                    'created_at' => $user->created_at?->toDateString(),
+                ]),
+            'recentFarms' => Farm::query()
+                ->with('user:id,name')
+                ->latest()
+                ->take(20)
+                ->get()
+                ->map(fn (Farm $farm) => [
+                    'id' => $farm->id,
+                    'farm_name' => $farm->farm_name,
+                    'farmer_name' => $farm->farmer_name,
+                    'owner_name' => $farm->user?->name,
+                    'phone' => $farm->phone,
+                    'location_text' => $farm->location_text,
+                    'area' => $farm->area,
+                    'length' => $farm->length,
+                    'width' => $farm->width,
+                    'has_well' => $farm->has_well,
+                    'has_electricity' => $farm->has_electricity,
+                    'description' => $farm->description,
+                    'image_url' => '/storage/' . ltrim($farm->image_path, '/'),
+                    'created_at' => $farm->created_at?->toDateString(),
+                ]),
+            'recentHarvests' => Harvest::query()
+                ->with('user:id,name')
+                ->latest()
+                ->take(20)
+                ->get()
+                ->map(fn (Harvest $harvest) => [
+                    'id' => $harvest->id,
+                    'harvest_name' => $harvest->harvest_name,
+                    'farmer_name' => $harvest->farmer_name,
+                    'owner_name' => $harvest->user?->name,
+                    'phone' => $harvest->phone,
+                    'location_text' => $harvest->location_text,
+                    'ready_status' => $harvest->ready_status,
+                    'ready_in_days' => $harvest->ready_in_days,
+                    'description' => $harvest->description,
+                    'image_url' => '/storage/' . ltrim($harvest->image_path, '/'),
+                    'created_at' => $harvest->created_at?->toDateString(),
+                ]),
+            'recentEquipment' => Equipment::query()
+                ->with('user:id,name')
+                ->latest()
+                ->take(20)
+                ->get()
+                ->map(fn (Equipment $equipment) => [
+                    'id' => $equipment->id,
+                    'product_name' => $equipment->product_name,
+                    'seller_name' => $equipment->seller_name,
+                    'owner_name' => $equipment->user?->name,
+                    'phone' => $equipment->phone,
+                    'price' => $equipment->price,
+                    'location_text' => $equipment->location_text,
+                    'description' => $equipment->description,
+                    'image_url' => '/storage/' . ltrim($equipment->image_path, '/'),
+                    'created_at' => $equipment->created_at?->toDateString(),
                 ]),
         ]);
     }
