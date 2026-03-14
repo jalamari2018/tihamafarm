@@ -1,0 +1,47 @@
+@import url('https://fonts.bunny.net/css?family=cairo:400,500,600,700,800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+    --brand-900: #0b5e21;
+    --brand-700: #1f7d2f;
+    --brand-500: #2ea33b;
+    --brand-gold: #c68a17;
+    --brand-bg: #f4f7ef;
+}
+
+body {
+    font-family: 'Cairo', sans-serif;
+    background: radial-gradient(circle at top right, #ffffff 0%, var(--brand-bg) 55%, #e7f3df 100%);
+    color: #143016;
+}
+
+.bg-brand-bg {
+    background: radial-gradient(circle at top right, #ffffff 0%, var(--brand-bg) 55%, #e7f3df 100%);
+}
+
+.border-brand-100 {
+    border-color: #d7e8cf;
+}
+
+.text-brand-700 {
+    color: var(--brand-700);
+}
+
+.text-brand-900 {
+    color: var(--brand-900);
+}
+
+.bg-brand-700 {
+    background-color: var(--brand-700);
+}
+
+.bg-brand-900 {
+    background-color: var(--brand-900);
+}
+
+.bg-brand-gold {
+    background-color: var(--brand-gold);
+}
