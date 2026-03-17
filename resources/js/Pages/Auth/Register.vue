@@ -13,6 +13,7 @@ const form = useForm({
     email: '',
     password: '',
     password_confirmation: '',
+    terms: false,
 });
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -21,6 +22,7 @@ const touched = ref({
     email: false,
     password: false,
     password_confirmation: false,
+    terms: false,
 });
 const attemptedSubmit = ref(false);
 const isSubmitting = ref(false);
@@ -54,6 +56,7 @@ const clientErrors = computed(() => ({
     password_confirmation: shouldShow('password_confirmation') && form.password
         ? (form.password === form.password_confirmation ? '' : 'تأكيد كلمة المرور غير مطابق.')
         : (shouldShow('password_confirmation') ? (form.password_confirmation ? '' : 'تأكيد كلمة المرور مطلوب.') : ''),
+    terms: shouldShow('terms') ? (form.terms ? '' : 'يجب الموافقة على الشروط والأحكام للمتابعة.') : '',
 }));
 
 const hasClientErrors = computed(() => Object.values(clientErrors.value).some(Boolean));
@@ -167,6 +170,26 @@ const goHome = () => {
                 <InputLabel for="password_confirmation" value="تأكيد كلمة المرور *" />
                 <TextInput id="password_confirmation" type="password" class="mt-1 block w-full" v-model="form.password_confirmation" autocomplete="new-password" @blur="touched.password_confirmation = true" />
                 <InputError class="mt-2" :message="form.errors.password_confirmation || clientErrors.password_confirmation" />
+            </div>
+
+            <div class="mt-4 rounded-lg border border-brand-100 bg-brand-bg/70 px-4 py-3">
+                <label for="terms" class="flex items-start gap-3 text-sm text-brand-800">
+                    <input
+                        id="terms"
+                        v-model="form.terms"
+                        type="checkbox"
+                        class="mt-1 h-4 w-4 rounded border-brand-300 text-emerald-600 focus:ring-emerald-500"
+                        @change="touched.terms = true"
+                    />
+                    <span>
+                        أوافق على
+                        <Link :href="route('terms')" class="font-bold underline">
+                            الشروط والأحكام
+                        </Link>
+                        الخاصة بمنصة تهامة فارم.
+                    </span>
+                </label>
+                <InputError class="mt-2" :message="form.errors.terms || clientErrors.terms" />
             </div>
 
             <div class="mt-4 flex items-center justify-between">

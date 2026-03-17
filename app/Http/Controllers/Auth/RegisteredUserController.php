@@ -53,12 +53,14 @@ class RegisteredUserController extends Controller
                 },
             ],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'terms' => ['accepted'],
         ], [
             'name.required' => 'الاسم مطلوب.',
             'email.required' => 'البريد الإلكتروني أو رقم الجوال مطلوب.',
             'email.unique' => 'البريد الإلكتروني أو رقم الجوال مستخدم مسبقًا.',
             'password.required' => 'كلمة المرور مطلوبة.',
             'password.confirmed' => 'تأكيد كلمة المرور غير مطابق.',
+            'terms.accepted' => 'يجب الموافقة على الشروط والأحكام للمتابعة.',
         ]);
 
         $emailOrPhone = (string) $request->input('email');

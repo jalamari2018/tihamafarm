@@ -7,9 +7,11 @@ use App\Http\Controllers\HarvestController;
 use App\Http\Controllers\MarketplaceController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\UserModerationController;
+use Inertia\Inertia;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [MarketplaceController::class, 'index'])->name('home');
+Route::get('/terms-and-conditions', fn () => Inertia::render('TermsAndConditions'))->name('terms');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', DashboardController::class)->name('dashboard');

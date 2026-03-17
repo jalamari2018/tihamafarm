@@ -218,14 +218,11 @@ onBeforeUnmount(() => {
         <main class="w-full flex-1 space-y-10">
             <section class="relative isolate min-h-screen overflow-hidden">
                 <div class="absolute inset-0">
-                    <iframe
-                        class="pointer-events-none absolute left-1/2 top-1/2 h-[56.25vw] min-h-full w-[177.78vh] min-w-full -translate-x-1/2 -translate-y-1/2"
-                        src="https://www.youtube.com/embed/85kTHwJ1Ju8?autoplay=1&mute=1&loop=1&playlist=85kTHwJ1Ju8&controls=0&modestbranding=1&rel=0&playsinline=1"
-                        title="Video background"
-                        frameborder="0"
-                        allow="autoplay; encrypted-media"
-                        allowfullscreen
-                    ></iframe>
+                    <img
+                        src="/assets/new_hero.jpeg"
+                        alt="مشهد زراعي رئيسي"
+                        class="h-full w-full object-cover"
+                    />
                 </div>
                 <div class="absolute inset-0 bg-emerald-950/55"></div>
 
